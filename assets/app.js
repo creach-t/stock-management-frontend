@@ -1,5 +1,6 @@
 // Import des styles
 import './styles/app.css';
+import './styles/form.css'; // Import de notre nouvelle feuille de style pour les formulaires
 
 // Import de Bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -20,4 +21,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialiser les popovers Bootstrap
     const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
     [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+    
+    // Fermeture automatique des alertes après 5 secondes
+    const autoCloseAlerts = document.querySelectorAll('.alert:not(.alert-danger)');
+    autoCloseAlerts.forEach(alert => {
+        setTimeout(() => {
+            const closeButton = alert.querySelector('.btn-close');
+            if (closeButton) {
+                closeButton.click();
+            }
+        }, 5000);
+    });
 });
