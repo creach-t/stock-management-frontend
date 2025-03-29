@@ -1,0 +1,10 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+# Redirection de la route racine vers le dashboard
+index:
+    path: /
+    controller: App\Controller\DashboardController::index
