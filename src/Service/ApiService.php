@@ -73,10 +73,19 @@ class ApiService
      */
     public function updateStock(int $productId, int $quantity, string $operation)
     {
-        $data = [
+        // Enregistrer les données pour débogage
+        $logData = [
             'productId' => $productId,
             'quantityChange' => $quantity,
             'operationType' => $operation
+        ];
+        error_log('Données envoyées à l\'API: ' . json_encode($logData));
+
+        // S'assurer que l'opération est en majuscule
+        $data = [
+            'productId' => $productId,
+            'quantityChange' => $quantity,
+            'operationType' => strtoupper($operation)
         ];
         
         return $this->makeRequest('PATCH', '/products/stock', $data);
@@ -144,10 +153,19 @@ class ApiService
     private function makeRequest(string $method, string $endpoint, array $data = [])
     {
         try {
-            $options = [];
+            $options = [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json'
+                ]
+            ];
             
             if (!empty($data)) {
                 $options['json'] = $data;
+                // Log des données envoyées pour les requêtes autres que GET
+                if ($method !== 'GET') {
+                    error_log("Requête $method sur $endpoint: " . json_encode($data));
+                }
             }
 
             $response = $this->httpClient->request(
@@ -156,7 +174,14 @@ class ApiService
                 $options
             );
 
-            return $response->toArray();
+            $responseData = $response->toArray();
+            
+            // Log de la réponse pour débogage
+            if ($method !== 'GET') {
+                error_log("Réponse de $endpoint: " . json_encode($responseData));
+            }
+            
+            return $responseData;
         } catch (ClientExceptionInterface $e) {
             // Erreur 4xx
             return $this->handleError($e, 'Client Error');
@@ -185,6 +210,7 @@ class ApiService
     private function handleError($exception, $type)
     {
         $message = $exception->getMessage();
+        error_log("Erreur API ($type): $message");
         
         // Tentative de récupération des détails de l'erreur si disponible
         $details = '';
@@ -192,12 +218,14 @@ class ApiService
             try {
                 $response = $exception->getResponse();
                 $content = $response->getContent(false);
+                error_log("Contenu de la réponse d'erreur: $content");
                 $data = json_decode($content, true);
                 if (isset($data['message'])) {
                     $details = $data['message'];
                 }
             } catch (\Exception $e) {
                 // Si on ne peut pas récupérer les détails, on continue sans
+                error_log("Impossible de récupérer les détails de l'erreur: " . $e->getMessage());
             }
         }
         
