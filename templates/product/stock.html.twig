@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion du stock - {{ product.name }}{% endblock %}
+
+{% block body %}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Tableau de bord</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('product_index') }}">Produits</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('product_show', {'id': product.id}) }}">{{ product.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Gestion du stock</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestion du stock</h1>
+        <a href="{{ path('product_show', {'id': product.id}) }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au produit
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations du produit</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th style="width: 30%">Nom</th>
+                                <td>{{ product.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>SKU</th>
+                                <td>{{ product.sku }}</td>
+                            </tr>
+                            <tr>
+                                <th>Catégorie</th>
+                                <td>{{ product.categoryName }}</td>
+                            </tr>
+                            <tr>
+                                <th>Prix</th>
+                                <td>{{ product.price|number_format(2, ',', ' ') }} €</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header {% if product.isLowStock() %}bg-warning text-white{% else %}bg-success text-white{% endif %}">
+                    <h5 class="card-title mb-0">État actuel du stock</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-1 {% if product.isLowStock() %}text-warning{% endif %}">{{ product.quantity }}</h1>
+                    <p class="mb-0">unités en stock</p>
+                    {% if product.isLowStock() %}
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="bi bi-exclamation-triangle"></i> Stock faible
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Ajuster le stock</h5>
+        </div>
+        <div class="card-body">
+            {{ form_start(form) }}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.operationType) }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.quantityChange) }}
+                    </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Mettre à jour le stock
+                    </button>
+                    <a href="{{ path('product_show', {'id': product.id}) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
