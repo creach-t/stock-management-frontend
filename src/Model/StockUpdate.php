@@ -4,6 +4,7 @@ namespace App\Model;
 
 class StockUpdate
 {
+    // Constantes pour les types d'opération (doivent correspondre exactement à ce que l'API attend)
     const OPERATION_ADD = 'ADD';
     const OPERATION_REMOVE = 'REMOVE';
     const OPERATION_SET = 'SET';
@@ -36,13 +37,15 @@ class StockUpdate
 
     public function getOperationType(): ?string
     {
-        return $this->operationType;
+        // S'assurer que l'opération est bien en majuscules comme l'API l'attend
+        return strtoupper($this->operationType);
     }
 
     public function setOperationType(?string $operationType): self
     {
-        if (in_array($operationType, [self::OPERATION_ADD, self::OPERATION_REMOVE, self::OPERATION_SET])) {
-            $this->operationType = $operationType;
+        if ($operationType && in_array(strtoupper($operationType), [self::OPERATION_ADD, self::OPERATION_REMOVE, self::OPERATION_SET])) {
+            // Stocker en majuscules pour assurer la cohérence
+            $this->operationType = strtoupper($operationType);
         }
         return $this;
     }
