@@ -12,6 +12,7 @@ class StockUpdate
     private ?int $productId = null;
     private ?int $quantityChange = null;
     private ?string $operationType = self::OPERATION_ADD;
+    private ?string $notes = null;
 
     public function getProductId(): ?int
     {
@@ -48,6 +49,17 @@ class StockUpdate
         }
         return $this;
     }
+    
+    public function getNotes(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function setNotes(?string $notes): self
+    {
+        $this->notes = $notes;
+        return $this;
+    }
 
     /**
      * Crée une instance de StockUpdate à partir d'un tableau de données
@@ -68,6 +80,10 @@ class StockUpdate
             $stockUpdate->setOperationType($data['operationType']);
         }
         
+        if (isset($data['notes'])) {
+            $stockUpdate->setNotes($data['notes']);
+        }
+        
         return $stockUpdate;
     }
 
@@ -80,6 +96,7 @@ class StockUpdate
             'productId' => $this->getProductId(),
             'quantityChange' => $this->getQuantityChange(),
             'operationType' => $this->getOperationType(),
+            'notes' => $this->getNotes() ?? 'Mise à jour depuis l\'interface'
         ];
     }
     
