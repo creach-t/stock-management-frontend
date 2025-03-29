@@ -17,6 +17,11 @@ class ProductController extends AbstractController
 {
     private $apiService;
     
+    // Nombre fixe d'éléments par page
+    private const ITEMS_PER_PAGE = 10;
+    // Ordre de tri par défaut
+    private const DEFAULT_SORT = 'ASC';
+    
     public function __construct(ApiService $apiService)
     {
         $this->apiService = $apiService;
@@ -25,10 +30,10 @@ class ProductController extends AbstractController
     #[Route('/', name: 'product_index', methods: ['GET'])]
     public function index(Request $request): Response
     {
-        // Paramètres de pagination
+        // Paramètres de pagination (fixés à 10 éléments par page et ordre ascendant)
         $page = max(0, (int)$request->query->get('page', 0));
-        $size = (int)$request->query->get('size', 10);
-        $sort = $request->query->get('sort', 'ASC');
+        $size = self::ITEMS_PER_PAGE;
+        $sort = self::DEFAULT_SORT;
         
         // Récupération des paramètres de filtrage
         $searchTerm = $request->query->get('search');
@@ -36,20 +41,43 @@ class ProductController extends AbstractController
         
         // Par défaut, on récupère tous les produits
         $productsData = null;
+        $totalElements = 0;
+        $totalPages = 0;
         
         // Si on a un terme de recherche (même vide) 
         if ($searchTerm !== null) {
             // Si le terme est vide mais qu'on a une catégorie, on utilise getProductsByCategory avec pagination
             if (empty($searchTerm) && $categoryId) {
-                $productsData = $this->apiService->getProductsByCategory($categoryId, $page, $size, $sort);
+                $response = $this->apiService->getProductsByCategory($categoryId, $page, $size, $sort, true);
+                if (is_array($response) && isset($response['content'])) {
+                    $productsData = $response['content'];
+                    $totalElements = $response['totalElements'] ?? 0;
+                    $totalPages = $response['totalPages'] ?? 0;
+                } else {
+                    $productsData = $response;
+                }
             } else {
                 // Sinon on utilise la recherche standard
-                $productsData = $this->apiService->searchProducts($searchTerm, $page, $size, $sort);
+                $response = $this->apiService->searchProducts($searchTerm, $page, $size, $sort, true);
+                if (is_array($response) && isset($response['content'])) {
+                    $productsData = $response['content'];
+                    $totalElements = $response['totalElements'] ?? 0;
+                    $totalPages = $response['totalPages'] ?? 0;
+                } else {
+                    $productsData = $response;
+                }
             }
         } 
         // Si on a seulement une catégorie
         elseif ($categoryId) {
-            $productsData = $this->apiService->getProductsByCategory($categoryId, $page, $size, $sort);
+            $response = $this->apiService->getProductsByCategory($categoryId, $page, $size, $sort, true);
+            if (is_array($response) && isset($response['content'])) {
+                $productsData = $response['content'];
+                $totalElements = $response['totalElements'] ?? 0;
+                $totalPages = $response['totalPages'] ?? 0;
+            } else {
+                $productsData = $response;
+            }
         } 
         // Sinon on récupère tous les produits
         else {
@@ -79,6 +107,9 @@ class ProductController extends AbstractController
             }
         }
         
+        // Déterminer si la pagination doit être affichée (seulement s'il y a plus d'une page)
+        $showPagination = $totalPages > 1;
+        
         return $this->render('product/index.html.twig', [
             'products' => $products,
             'categories' => $categories,
@@ -87,8 +118,10 @@ class ProductController extends AbstractController
             'currentPage' => $page,
             'pageSize' => $size,
             'sort' => $sort,
+            'isPaginationActive' => ($searchTerm !== null || $categoryId),
+            'showPagination' => $showPagination,
+            'totalPages' => $totalPages,
             'error' => $error,
-            'isPaginationActive' => ($searchTerm !== null || $categoryId)
         ]);
     }
     
