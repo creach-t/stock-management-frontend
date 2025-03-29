@@ -78,18 +78,51 @@ class ApiService
      */
     public function updateStock(int $productId, int $quantity, string $operation)
     {
-        // Construire les données à envoyer à l'API Java
-        // Assurons-nous que l'operationType est exactement comme attendu par l'enum Java
-        $data = [
-            'productId' => $productId,
-            'quantityChange' => $quantity,
-            'operationType' => strtoupper($operation)
-        ];
+        // D'abord obtenir les données actuelles du produit
+        $productData = $this->getProduct($productId);
+        
+        if (isset($productData['success']) && $productData['success'] === false) {
+            return $productData; // Retourner l'erreur
+        }
+        
+        // Calculer la nouvelle quantité en fonction de l'opération
+        $newQuantity = $productData['quantity'];
+        $operation = strtoupper($operation);
+        
+        switch ($operation) {
+            case 'ADD':
+                $newQuantity += $quantity;
+                break;
+            case 'REMOVE':
+                $newQuantity -= $quantity;
+                if ($newQuantity < 0) {
+                    return [
+                        'success' => false,
+                        'error' => 'Invalid Operation',
+                        'message' => 'Impossible de retirer plus d\'items que disponible en stock. Stock actuel: ' . $productData['quantity']
+                    ];
+                }
+                break;
+            case 'SET':
+                $newQuantity = $quantity;
+                break;
+            default:
+                return [
+                    'success' => false,
+                    'error' => 'Invalid Operation',
+                    'message' => 'Type d\'opération non reconnu: ' . $operation
+                ];
+        }
+        
+        // Mettre à jour les données du produit avec la nouvelle quantité
+        $productData['quantity'] = $newQuantity;
         
         // Journaliser les données pour débogage
-        error_log('[Stock Update] Données envoyées à l\'API: ' . json_encode($data));
+        error_log('[Stock Update] Opération: ' . $operation . ', Quantité: ' . $quantity . ', Nouvelle quantité: ' . $newQuantity);
+        error_log('[Stock Update] Données envoyées à l\'API: ' . json_encode($productData));
         
-        $response = $this->makeRequest('PATCH', '/products/stock', $data);
+        // Utiliser updateProduct pour mettre à jour le produit
+        $response = $this->updateProduct($productId, $productData);
         
         // Journaliser la réponse pour débogage
         error_log('[Stock Update] Réponse de l\'API: ' . json_encode($response));
