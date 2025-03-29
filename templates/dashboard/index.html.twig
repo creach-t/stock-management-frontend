@@ -1,0 +1,128 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord - Gestion de Stock{% endblock %}
+
+{% block body %}
+    <h1 class="mb-4">Tableau de bord</h1>
+    
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% else %}
+        {# Statistiques #}
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card card-dashboard text-center mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Produits</h5>
+                        <p class="card-text display-4">{{ productCount }}</p>
+                        <a href="{{ path('product_index') }}" class="btn btn-primary">Voir les produits</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-dashboard text-center mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Catégories</h5>
+                        <p class="card-text display-4">{{ categoryCount }}</p>
+                        <a href="{{ path('category_index') }}" class="btn btn-primary">Voir les catégories</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-dashboard text-center mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Stock total</h5>
+                        <p class="card-text display-4">{{ totalStock }}</p>
+                        <a href="{{ path('product_index') }}" class="btn btn-primary">Gérer le stock</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {# Produits à faible stock #}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="card-title mb-0">Produits à faible stock</h5>
+            </div>
+            <div class="card-body">
+                {% if lowStockProducts is empty %}
+                    <p class="text-center">Aucun produit à faible stock.</p>
+                {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>SKU</th>
+                                    <th>Catégorie</th>
+                                    <th>Stock</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in lowStockProducts %}
+                                    <tr>
+                                        <td>{{ product.name }}</td>
+                                        <td>{{ product.sku }}</td>
+                                        <td>{{ product.categoryName }}</td>
+                                        <td class="low-stock">{{ product.quantity }}</td>
+                                        <td>
+                                            <a href="{{ path('product_stock', {'id': product.id}) }}" class="btn btn-sm btn-primary">Ajuster stock</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {# Derniers produits #}
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Derniers produits</h5>
+            </div>
+            <div class="card-body">
+                {% if products is empty %}
+                    <p class="text-center">Aucun produit disponible.</p>
+                {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>SKU</th>
+                                    <th>Catégorie</th>
+                                    <th>Prix</th>
+                                    <th>Stock</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products|slice(0, 5) %}
+                                    <tr>
+                                        <td>{{ product.name }}</td>
+                                        <td>{{ product.sku }}</td>
+                                        <td>{{ product.categoryName }}</td>
+                                        <td>{{ product.price|number_format(2, ',', ' ') }} €</td>
+                                        <td {% if product.isLowStock() %}class="low-stock"{% endif %}>{{ product.quantity }}</td>
+                                        <td>
+                                            <a href="{{ path('product_show', {'id': product.id}) }}" class="btn btn-sm btn-info">Voir</a>
+                                            <a href="{{ path('product_stock', {'id': product.id}) }}" class="btn btn-sm btn-primary">Stock</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="text-center mt-3">
+                            <a href="{{ path('product_index') }}" class="btn btn-outline-primary">Voir tous les produits</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
