@@ -78,51 +78,18 @@ class ApiService
      */
     public function updateStock(int $productId, int $quantity, string $operation)
     {
-        // D'abord obtenir les données actuelles du produit
-        $productData = $this->getProduct($productId);
-        
-        if (isset($productData['success']) && $productData['success'] === false) {
-            return $productData; // Retourner l'erreur
-        }
-        
-        // Calculer la nouvelle quantité en fonction de l'opération
-        $newQuantity = $productData['quantity'];
-        $operation = strtoupper($operation);
-        
-        switch ($operation) {
-            case 'ADD':
-                $newQuantity += $quantity;
-                break;
-            case 'REMOVE':
-                $newQuantity -= $quantity;
-                if ($newQuantity < 0) {
-                    return [
-                        'success' => false,
-                        'error' => 'Invalid Operation',
-                        'message' => 'Impossible de retirer plus d\'items que disponible en stock. Stock actuel: ' . $productData['quantity']
-                    ];
-                }
-                break;
-            case 'SET':
-                $newQuantity = $quantity;
-                break;
-            default:
-                return [
-                    'success' => false,
-                    'error' => 'Invalid Operation',
-                    'message' => 'Type d\'opération non reconnu: ' . $operation
-                ];
-        }
-        
-        // Mettre à jour les données du produit avec la nouvelle quantité
-        $productData['quantity'] = $newQuantity;
+        // Construire les données spécifiques pour l'endpoint PATCH /products/stock
+        $data = [
+            'productId' => $productId,
+            'quantityChange' => $quantity,
+            'operationType' => strtoupper($operation),
+            'notes' => 'Mise à jour depuis l\'interface' // Optionnel, comme indiqué dans votre exemple
+        ];
         
         // Journaliser les données pour débogage
-        error_log('[Stock Update] Opération: ' . $operation . ', Quantité: ' . $quantity . ', Nouvelle quantité: ' . $newQuantity);
-        error_log('[Stock Update] Données envoyées à l\'API: ' . json_encode($productData));
+        error_log('[Stock Update] Données envoyées à l\'API: ' . json_encode($data));
         
-        // Utiliser updateProduct pour mettre à jour le produit
-        $response = $this->updateProduct($productId, $productData);
+        $response = $this->makeRequest('PATCH', '/products/stock', $data);
         
         // Journaliser la réponse pour débogage
         error_log('[Stock Update] Réponse de l\'API: ' . json_encode($response));
@@ -194,7 +161,7 @@ class ApiService
         try {
             $options = [
                 'headers' => [
-                    'Accept' => 'application/json',
+                    'accept' => '*/*', 
                     'Content-Type' => 'application/json'
                 ]
             ];
@@ -209,11 +176,12 @@ class ApiService
             }
             
             // Journaliser l'URL complète pour le débogage
-            error_log("URL API: {$this->apiUrl}$endpoint");
+            $fullUrl = $this->apiUrl . $endpoint;
+            error_log("URL API: $fullUrl");
 
             $response = $this->httpClient->request(
                 $method,
-                $this->apiUrl . $endpoint,
+                $fullUrl,
                 $options
             );
 
@@ -221,6 +189,7 @@ class ApiService
             
             // Journaliser pour les opérations importantes
             if ($method !== 'GET') {
+                error_log("Réponse HTTP: " . $response->getStatusCode());
                 error_log("Réponse de $endpoint: " . json_encode($responseData));
             }
             
@@ -239,6 +208,8 @@ class ApiService
             return $this->handleError($e, 'Transport Error');
         } catch (\Exception $e) {
             // Toute autre erreur
+            error_log("Exception générale: " . $e->getMessage());
+            error_log("Trace: " . $e->getTraceAsString());
             return [
                 'success' => false,
                 'error' => 'General Error',
