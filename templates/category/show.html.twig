@@ -44,6 +44,12 @@
                                 <th>Description</th>
                                 <td>{{ category.description }}</td>
                             </tr>
+                            {% if category.productCount is defined %}
+                            <tr>
+                                <th>Nombre de produits</th>
+                                <td>{{ category.productCount }}</td>
+                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
