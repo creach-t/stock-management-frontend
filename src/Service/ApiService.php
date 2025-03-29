@@ -144,9 +144,10 @@ class ApiService
      * @param int $page La page à afficher (par défaut: 0)
      * @param int $size Le nombre d'éléments par page (par défaut: 10)
      * @param string $sort Le tri (par défaut: ASC)
-     * @return array Les produits trouvés
+     * @param bool $returnFullResponse Retourner la réponse complète avec métadonnées de pagination
+     * @return array Les produits trouvés ou la réponse complète
      */
-    public function searchProducts(string $term, int $page = 0, int $size = 10, string $sort = 'ASC')
+    public function searchProducts(string $term, int $page = 0, int $size = 10, string $sort = 'ASC', bool $returnFullResponse = false)
     {
         $endpoint = '/products/search?term=' . urlencode($term) . 
                     '&page=' . $page . 
@@ -155,7 +156,12 @@ class ApiService
         
         $response = $this->makeRequest('GET', $endpoint);
         
-        // Si la réponse est paginée (contient 'content'), retourner seulement le contenu
+        // Si on souhaite la réponse complète avec les métadonnées de pagination
+        if ($returnFullResponse && is_array($response)) {
+            return $response;
+        }
+        
+        // Sinon, on extrait juste le contenu
         if (is_array($response) && isset($response['content'])) {
             return $response['content'];
         }
@@ -170,9 +176,10 @@ class ApiService
      * @param int $page La page à afficher (par défaut: 0)
      * @param int $size Le nombre d'éléments par page (par défaut: 20)
      * @param string $sort Le tri (par défaut: ASC)
-     * @return array Les produits de la catégorie
+     * @param bool $returnFullResponse Retourner la réponse complète avec métadonnées de pagination
+     * @return array Les produits de la catégorie ou la réponse complète
      */
-    public function getProductsByCategory(int $categoryId, int $page = 0, int $size = 20, string $sort = 'ASC')
+    public function getProductsByCategory(int $categoryId, int $page = 0, int $size = 20, string $sort = 'ASC', bool $returnFullResponse = false)
     {
         $endpoint = '/products/category/' . $categoryId . 
                    '?page=' . $page . 
@@ -181,7 +188,12 @@ class ApiService
         
         $response = $this->makeRequest('GET', $endpoint);
         
-        // Si la réponse est paginée (contient 'content'), retourner seulement le contenu
+        // Si on souhaite la réponse complète avec les métadonnées de pagination
+        if ($returnFullResponse && is_array($response)) {
+            return $response;
+        }
+        
+        // Sinon, on extrait juste le contenu
         if (is_array($response) && isset($response['content'])) {
             return $response['content'];
         }
