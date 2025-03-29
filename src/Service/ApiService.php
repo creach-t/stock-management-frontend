@@ -70,25 +70,31 @@ class ApiService
 
     /**
      * Met à jour le stock d'un produit
+     * 
+     * @param int $productId ID du produit
+     * @param int $quantity Changement de quantité
+     * @param string $operation Type d'opération (ADD, REMOVE, SET)
+     * @return array Réponse de l'API
      */
     public function updateStock(int $productId, int $quantity, string $operation)
     {
-        // Enregistrer les données pour débogage
-        $logData = [
-            'productId' => $productId,
-            'quantityChange' => $quantity,
-            'operationType' => $operation
-        ];
-        error_log('Données envoyées à l\'API: ' . json_encode($logData));
-
-        // S'assurer que l'opération est en majuscule
+        // Construire les données à envoyer à l'API Java
+        // Assurons-nous que l'operationType est exactement comme attendu par l'enum Java
         $data = [
             'productId' => $productId,
             'quantityChange' => $quantity,
             'operationType' => strtoupper($operation)
         ];
         
-        return $this->makeRequest('PATCH', '/products/stock', $data);
+        // Journaliser les données pour débogage
+        error_log('[Stock Update] Données envoyées à l\'API: ' . json_encode($data));
+        
+        $response = $this->makeRequest('PATCH', '/products/stock', $data);
+        
+        // Journaliser la réponse pour débogage
+        error_log('[Stock Update] Réponse de l\'API: ' . json_encode($response));
+        
+        return $response;
     }
 
     /**
@@ -162,11 +168,15 @@ class ApiService
             
             if (!empty($data)) {
                 $options['json'] = $data;
-                // Log des données envoyées pour les requêtes autres que GET
+                
+                // Journaliser la requête pour le débogage
                 if ($method !== 'GET') {
                     error_log("Requête $method sur $endpoint: " . json_encode($data));
                 }
             }
+            
+            // Journaliser l'URL complète pour le débogage
+            error_log("URL API: {$this->apiUrl}$endpoint");
 
             $response = $this->httpClient->request(
                 $method,
@@ -176,7 +186,7 @@ class ApiService
 
             $responseData = $response->toArray();
             
-            // Log de la réponse pour débogage
+            // Journaliser pour les opérations importantes
             if ($method !== 'GET') {
                 error_log("Réponse de $endpoint: " . json_encode($responseData));
             }
@@ -217,8 +227,11 @@ class ApiService
         if (method_exists($exception, 'getResponse')) {
             try {
                 $response = $exception->getResponse();
+                $statusCode = $response->getStatusCode();
                 $content = $response->getContent(false);
-                error_log("Contenu de la réponse d'erreur: $content");
+                
+                error_log("Réponse d'erreur (code $statusCode): $content");
+                
                 $data = json_decode($content, true);
                 if (isset($data['message'])) {
                     $details = $data['message'];
