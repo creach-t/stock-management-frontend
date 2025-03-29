@@ -4,7 +4,7 @@ namespace App\Model;
 
 class StockUpdate
 {
-    // Constantes pour les types d'opération (doivent correspondre exactement à ce que l'API attend)
+    // Constantes pour les types d'opération (correspondent exactement à l'enum Java OperationType dans StockUpdateDTO.java)
     const OPERATION_ADD = 'ADD';
     const OPERATION_REMOVE = 'REMOVE';
     const OPERATION_SET = 'SET';
@@ -37,14 +37,13 @@ class StockUpdate
 
     public function getOperationType(): ?string
     {
-        // S'assurer que l'opération est bien en majuscules comme l'API l'attend
+        // L'API Spring attend une valeur d'enum exacte (ex: ADD, REMOVE, SET)
         return strtoupper($this->operationType);
     }
 
     public function setOperationType(?string $operationType): self
     {
         if ($operationType && in_array(strtoupper($operationType), [self::OPERATION_ADD, self::OPERATION_REMOVE, self::OPERATION_SET])) {
-            // Stocker en majuscules pour assurer la cohérence
             $this->operationType = strtoupper($operationType);
         }
         return $this;
