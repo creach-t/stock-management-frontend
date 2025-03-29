@@ -147,10 +147,16 @@ class ApiService
 
     /**
      * Récupère les produits d'une catégorie
+     * 
+     * @param int $categoryId L'ID de la catégorie
+     * @param int $page La page à afficher (par défaut: 0)
+     * @param int $size Le nombre d'éléments par page (par défaut: 20)
+     * @param string $sort Le tri (par défaut: ASC)
+     * @return array Les produits de la catégorie
      */
-    public function getProductsByCategory(int $categoryId)
+    public function getProductsByCategory(int $categoryId, int $page = 0, int $size = 20, string $sort = 'ASC')
     {
-        return $this->makeRequest('GET', '/products/category/' . $categoryId);
+        return $this->makeRequest('GET', '/products/category/' . $categoryId . '?page=' . $page . '&size=' . $size . '&sort=' . $sort);
     }
 
     /**
