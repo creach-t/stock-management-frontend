@@ -25,10 +25,15 @@ class ProductController extends AbstractController
     #[Route('/', name: 'product_index', methods: ['GET'])]
     public function index(Request $request): Response
     {
+        // Paramètres de pagination
+        $page = max(0, (int)$request->query->get('page', 0));
+        $size = (int)$request->query->get('size', 10);
+        $sort = $request->query->get('sort', 'ASC');
+        
         // Recherche par terme
         $searchTerm = $request->query->get('search');
         if ($searchTerm) {
-            $productsData = $this->apiService->searchProducts($searchTerm);
+            $productsData = $this->apiService->searchProducts($searchTerm, $page, $size, $sort);
         } else {
             $productsData = $this->apiService->getProducts();
         }
@@ -36,7 +41,7 @@ class ProductController extends AbstractController
         // Filtre par catégorie
         $categoryId = $request->query->get('category');
         if ($categoryId) {
-            $productsData = $this->apiService->getProductsByCategory($categoryId);
+            $productsData = $this->apiService->getProductsByCategory($categoryId, $page, $size, $sort);
         }
         
         // Vérifier si une erreur s'est produite
@@ -67,6 +72,9 @@ class ProductController extends AbstractController
             'categories' => $categories,
             'searchTerm' => $searchTerm,
             'selectedCategory' => $categoryId,
+            'currentPage' => $page,
+            'pageSize' => $size,
+            'sort' => $sort,
             'error' => $error,
         ]);
     }
