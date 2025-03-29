@@ -193,27 +193,42 @@ class ApiService
 
             // Vérifier si la réponse a un contenu
             $statusCode = $response->getStatusCode();
-            $contentLength = $response->getHeaders()['content-length'][0] ?? 0;
             
-            // Pour une réponse 204 (No Content) ou une réponse vide mais réussie
-            if ($statusCode === 204 || (int)$contentLength === 0) {
-                error_log("Réponse vide avec code HTTP: " . $statusCode);
+            // Traiter spécifiquement les réponses de suppression réussies (204 No Content)
+            if ($statusCode === 204 || ($method === 'DELETE' && $statusCode >= 200 && $statusCode < 300)) {
+                error_log("Opération de suppression réussie avec code HTTP: " . $statusCode);
                 return [
                     'success' => true,
                     'message' => 'Opération réussie'
                 ];
             }
             
-            // Sinon, traiter la réponse JSON comme avant
-            $responseData = $response->toArray();
-            
-            // Journaliser pour les opérations importantes
-            if ($method !== 'GET') {
-                error_log("Réponse HTTP: " . $statusCode);
-                error_log("Réponse de $endpoint: " . json_encode($responseData));
+            // Pour les autres types de réponses, vérifier s'il y a du contenu
+            try {
+                $responseData = $response->toArray(false);
+                
+                // Journaliser pour les opérations importantes
+                if ($method !== 'GET') {
+                    error_log("Réponse HTTP: " . $statusCode);
+                    error_log("Réponse de $endpoint: " . json_encode($responseData));
+                }
+                
+                return $responseData;
+            } catch (\Exception $e) {
+                // Si on ne peut pas parser la réponse en JSON (par exemple, si elle est vide)
+                // mais que le code HTTP est un succès, on considère l'opération comme réussie
+                if ($statusCode >= 200 && $statusCode < 300) {
+                    error_log("Réponse non-JSON mais succès (code $statusCode): " . $e->getMessage());
+                    return [
+                        'success' => true,
+                        'message' => 'Opération réussie'
+                    ];
+                }
+                
+                // Sinon, c'est une erreur
+                throw $e;
             }
             
-            return $responseData;
         } catch (ClientExceptionInterface $e) {
             // Erreur 4xx
             return $this->handleError($e, 'Client Error');
@@ -227,6 +242,16 @@ class ApiService
             // Erreur de transport (connexion impossible, etc.)
             return $this->handleError($e, 'Transport Error');
         } catch (\Exception $e) {
+            // Si le message d'erreur contient "empty response" et que c'est une méthode DELETE,
+            // c'est probablement un succès avec un corps vide
+            if ($method === 'DELETE' && strpos($e->getMessage(), 'empty response') !== false) {
+                error_log("Réponse vide pour une suppression, considérée comme un succès");
+                return [
+                    'success' => true,
+                    'message' => 'Suppression réussie'
+                ];
+            }
+            
             // Toute autre erreur
             error_log("Exception générale: " . $e->getMessage());
             error_log("Trace: " . $e->getTraceAsString());
@@ -246,21 +271,49 @@ class ApiService
         $message = $exception->getMessage();
         error_log("Erreur API ($type): $message");
         
+        // Si c'est une erreur de "réponse vide" et qu'elle concerne une opération de suppression,
+        // on peut supposer que c'est un succès avec un corps vide
+        if (strpos($message, 'empty response') !== false || strpos($message, 'Response body is empty') !== false) {
+            return [
+                'success' => true,
+                'message' => 'Opération réussie (réponse vide)'
+            ];
+        }
+        
         // Tentative de récupération des détails de l'erreur si disponible
         $details = '';
         if (method_exists($exception, 'getResponse')) {
             try {
                 $response = $exception->getResponse();
                 $statusCode = $response->getStatusCode();
-                $content = $response->getContent(false);
                 
-                error_log("Réponse d'erreur (code $statusCode): $content");
+                // Vérifier si c'est un code de succès pour DELETE (204 No Content est courant)
+                if ($statusCode >= 200 && $statusCode < 300) {
+                    return [
+                        'success' => true,
+                        'message' => 'Opération réussie'
+                    ];
+                }
                 
-                // S'assurer que le contenu n'est pas vide avant de tenter de le décoder
-                if (!empty($content)) {
-                    $data = json_decode($content, true);
-                    if (isset($data['message'])) {
-                        $details = $data['message'];
+                try {
+                    $content = $response->getContent(false);
+                    error_log("Réponse d'erreur (code $statusCode): $content");
+                    
+                    // S'assurer que le contenu n'est pas vide avant de tenter de le décoder
+                    if (!empty($content)) {
+                        $data = json_decode($content, true);
+                        if (isset($data['message'])) {
+                            $details = $data['message'];
+                        }
+                    }
+                } catch (\Exception $contentEx) {
+                    // Si on ne peut pas obtenir le contenu (par exemple, s'il est vide),
+                    // mais que c'est un code de succès, on considère l'opération comme réussie
+                    if ($statusCode >= 200 && $statusCode < 300) {
+                        return [
+                            'success' => true,
+                            'message' => 'Opération réussie (pas de contenu)'
+                        ];
                     }
                 }
             } catch (\Exception $e) {
