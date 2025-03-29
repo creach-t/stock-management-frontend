@@ -138,11 +138,29 @@ class ApiService
     }
 
     /**
-     * Recherche des produits
+     * Recherche des produits avec pagination et tri
+     * 
+     * @param string $term Terme de recherche
+     * @param int $page La page à afficher (par défaut: 0)
+     * @param int $size Le nombre d'éléments par page (par défaut: 10)
+     * @param string $sort Le tri (par défaut: ASC)
+     * @return array Les produits trouvés
      */
-    public function searchProducts(string $term)
+    public function searchProducts(string $term, int $page = 0, int $size = 10, string $sort = 'ASC')
     {
-        return $this->makeRequest('GET', '/products/search?term=' . urlencode($term));
+        $endpoint = '/products/search?term=' . urlencode($term) . 
+                    '&page=' . $page . 
+                    '&size=' . $size . 
+                    '&sort=' . $sort;
+        
+        $response = $this->makeRequest('GET', $endpoint);
+        
+        // Si la réponse est paginée (contient 'content'), retourner seulement le contenu
+        if (is_array($response) && isset($response['content'])) {
+            return $response['content'];
+        }
+        
+        return $response;
     }
 
     /**
