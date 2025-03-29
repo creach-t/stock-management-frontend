@@ -2,6 +2,48 @@
 
 {% block title %}Gestion du stock - {{ product.name }}{% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Styles pour mobile */
+    @media (max-width: 767px) {
+        .breadcrumb {
+            display: none;  /* Masquer le fil d'Ariane sur mobile pour économiser de l'espace */
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .page-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0;
+        }
+        
+        .stock-value {
+            font-size: 4rem !important;
+        }
+        
+        .info-label {
+            font-weight: 500;
+        }
+        
+        .btn-lg {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .btn-group-responsive {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block body %}
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -12,14 +54,76 @@
         </ol>
     </nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 page-header">
         <h1 class="h2">Gestion du stock de "{{ product.name }}"</h1>
         <a href="{{ path('product_show', {'id': product.id}) }}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Retour au produit
         </a>
     </div>
 
-    <div class="row g-4">
+    <!-- État actuel du stock - toujours affiché en premier sur mobile -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header {% if product.isLowStock() %}bg-warning{% else %}bg-success{% endif %} text-white">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-box-seam me-2"></i>État actuel du stock
+            </h5>
+        </div>
+        <div class="card-body text-center">
+            <div class="py-3">
+                <span class="display-1 stock-value {% if product.isLowStock() %}text-warning{% else %}text-success{% endif %} fw-bold">
+                    {{ product.quantity }}
+                </span>
+                <p class="fs-5 text-muted mb-0">unités en stock</p>
+            </div>
+            
+            {% if product.isLowStock() %}
+                <div class="alert alert-warning d-flex align-items-center mt-3 mb-0">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <div>Stock faible - Envisagez de réapprovisionner</div>
+                </div>
+            {% else %}
+                <div class="alert alert-success d-flex align-items-center mt-3 mb-0">
+                    <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                    <div>Niveau de stock satisfaisant</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Informations du produit sous forme de carte accordéon sur mobile -->
+    <div class="d-md-none card shadow-sm border-0 mb-4">
+        <div class="card-header bg-light" data-bs-toggle="collapse" data-bs-target="#productInfoCollapse" aria-expanded="false" aria-controls="productInfoCollapse" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Informations du produit
+                </h5>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+        </div>
+        <div class="collapse" id="productInfoCollapse">
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-4 text-muted info-label">Nom:</div>
+                    <div class="col-8">{{ product.name }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted info-label">SKU:</div>
+                    <div class="col-8">{{ product.sku }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted info-label">Catégorie:</div>
+                    <div class="col-8">{{ product.categoryName }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted info-label">Prix:</div>
+                    <div class="col-8">{{ product.price|number_format(2, ',', ' ') }} €</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations du produit - version desktop -->
+    <div class="d-none d-md-block row g-4 mb-4">
         <!-- Informations du produit -->
         <div class="col-lg-6">
             <div class="card h-100 shadow-sm border-0">
@@ -49,8 +153,8 @@
             </div>
         </div>
 
-        <!-- État actuel du stock -->
-        <div class="col-lg-6">
+        <!-- État actuel du stock - version desktop -->
+        <div class="col-lg-6 d-none d-md-block">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-header {% if product.isLowStock() %}bg-warning{% else %}bg-success{% endif %} text-white">
                     <h5 class="card-title mb-0">
@@ -82,7 +186,7 @@
     </div>
 
     <!-- Ajuster le stock -->
-    <div class="card shadow-sm border-0 mt-4">
+    <div class="card shadow-sm border-0">
         <div class="card-header bg-primary text-white">
             <h5 class="card-title mb-0">
                 <i class="bi bi-sliders me-2"></i>Ajuster le stock
@@ -92,9 +196,9 @@
             {{ form_start(form, {'attr': {'id': 'stock-update-form', 'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form_label(form.operationType, 'Type d\'opération', {'label_attr': {'class': 'form-label fw-medium'}}) }}
-                            {{ form_widget(form.operationType, {'attr': {'class': 'form-select form-select-lg'}}) }}
+                            {{ form_widget(form.operationType, {'attr': {'class': 'form-select'}}) }}
                             <div class="form-text text-muted">
                                 Choisissez si vous souhaitez ajouter, retirer ou définir une quantité précise.
                             </div>
@@ -102,9 +206,9 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form_label(form.quantityChange, 'Quantité', {'label_attr': {'class': 'form-label fw-medium'}}) }}
-                            {{ form_widget(form.quantityChange, {'attr': {'class': 'form-control form-control-lg', 'min': '1'}}) }}
+                            {{ form_widget(form.quantityChange, {'attr': {'class': 'form-control', 'min': '1'}}) }}
                             <div class="form-text text-muted">
                                 Nombre d'unités à ajouter, retirer ou définir.
                             </div>
@@ -113,15 +217,37 @@
                     </div>
                 </div>
 
-                <div class="d-grid gap-2 d-sm-flex justify-content-sm-end mt-4">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 btn-group-responsive">
                     <a href="{{ path('product_show', {'id': product.id}) }}" class="btn btn-outline-secondary btn-lg">
                         <i class="bi bi-x-circle me-1"></i> Annuler
                     </a>
                     <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-check-circle me-1"></i> Mettre à jour le stock
+                        <i class="bi bi-check-circle me-1"></i> Mettre à jour
                     </button>
                 </div>
             {{ form_end(form) }}
         </div>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animation pour l'icône de l'accordéon
+        const infoHeader = document.querySelector('[data-bs-toggle="collapse"]');
+        if (infoHeader) {
+            infoHeader.addEventListener('click', function() {
+                const icon = this.querySelector('.bi-chevron-down');
+                if (icon) {
+                    if (document.getElementById('productInfoCollapse').classList.contains('show')) {
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
