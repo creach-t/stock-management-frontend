@@ -101,7 +101,8 @@ class StockUpdate
     }
     
     /**
-     * Retourne la liste des types d'opérations disponibles
+     * Retourne la liste des types d'opérations disponibles pour l'affichage dans le formulaire
+     * Les clés sont les valeurs techniques (ADD, REMOVE, SET) et les valeurs sont les libellés à afficher
      */
     public static function getOperationTypes(): array
     {
