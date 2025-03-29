@@ -40,6 +40,35 @@
                             <i class="bi bi-x-circle"></i> Réinitialiser
                         </a>
                     </div>
+                    
+                    {% if searchTerm is defined and searchTerm is not empty %}
+                    <div class="col-md-12 mt-3">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="pageSize">Éléments par page</label>
+                                    <select name="size" id="pageSize" class="form-select">
+                                        {% for option in [5, 10, 20, 50] %}
+                                            <option value="{{ option }}" {% if pageSize is defined and pageSize == option %}selected{% endif %}>{{ option }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="sortOrder">Tri</label>
+                                    <select name="sort" id="sortOrder" class="form-select">
+                                        <option value="ASC" {% if sort is defined and sort == 'ASC' %}selected{% endif %}>Ascendant</option>
+                                        <option value="DESC" {% if sort is defined and sort == 'DESC' %}selected{% endif %}>Descendant</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-outline-primary w-100">Appliquer</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </form>
             </div>
         </div>
@@ -90,6 +119,52 @@
                     </tbody>
                 </table>
             </div>
+            
+            {# Pagination #}
+            {% if searchTerm is defined and searchTerm is not empty %}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div>
+                    <p class="mb-0">Page {{ currentPage + 1 }}</p>
+                </div>
+                <div>
+                    <nav aria-label="Navigation des pages">
+                        <ul class="pagination mb-0">
+                            {% if currentPage is defined and currentPage > 0 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path('product_index', {
+                                    'search': searchTerm, 
+                                    'page': currentPage - 1, 
+                                    'size': pageSize, 
+                                    'sort': sort
+                                }) }}">
+                                    Précédent
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Précédent</span>
+                            </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">{{ currentPage is defined ? currentPage + 1 : 1 }}</span>
+                            </li>
+                            
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path('product_index', {
+                                    'search': searchTerm, 
+                                    'page': currentPage is defined ? currentPage + 1 : 1, 
+                                    'size': pageSize, 
+                                    'sort': sort
+                                }) }}">
+                                    Suivant
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
         {% endif %}
     {% endif %}
 {% endblock %}
