@@ -27,6 +27,24 @@ Ce projet est un frontend simple développé avec PHP et Symfony pour interfacer
 
 ## Installation
 
+### Méthode 1 : Avec Docker (recommandée si PHP n'est pas installé sur votre machine)
+
+1. Assurez-vous d'avoir Docker et Docker Compose installés sur votre machine
+2. Clonez le dépôt
+```bash
+git clone https://github.com/creach-t/stock-management-frontend.git
+cd stock-management-frontend
+```
+
+3. Construisez et démarrez les conteneurs Docker
+```bash
+docker-compose up -d
+```
+
+4. Accédez à l'application dans votre navigateur à l'adresse : http://localhost:8081
+
+### Méthode 2 : Installation directe (si PHP 8.1+ est installé)
+
 1. Cloner le dépôt
 ```bash
 git clone https://github.com/creach-t/stock-management-frontend.git
@@ -52,6 +70,23 @@ API_URL=http://localhost:8080/api
 5. Lancer le serveur Symfony
 ```bash
 symfony server:start -d
+```
+
+## Configuration
+
+Par défaut, l'application est configurée pour se connecter à l'API à l'adresse `http://localhost:8080/api`. Si votre API est sur une autre adresse ou port, vous devez modifier cette configuration :
+
+### Avec Docker
+Modifiez la ligne `API_URL` dans le fichier `docker-compose.yml` :
+```yaml
+environment:
+  - API_URL=http://votre-adresse-api:port/api
+```
+
+### Sans Docker
+Modifiez le fichier `.env.local` (créez-le s'il n'existe pas) :
+```
+API_URL=http://votre-adresse-api:port/api
 ```
 
 ## Structure du projet
@@ -89,8 +124,17 @@ templates/
 
 ## Développement
 
-Pour lancer le serveur de développement avec hot-reloading:
+### Avec Docker
+Pour travailler en mode développement avec hot-reloading :
+```bash
+# Accéder au conteneur
+docker-compose exec frontend bash
 
+# À l'intérieur du conteneur, lancer Webpack Encore en mode watch
+npm run watch
+```
+
+### Sans Docker
 ```bash
 npm run watch
 symfony server:start -d
