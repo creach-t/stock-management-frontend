@@ -28,7 +28,7 @@ class CategoryController extends AbstractController
         // Vérifier si une erreur s'est produite
         $error = null;
         if (isset($categoriesData['success']) && $categoriesData['success'] === false) {
-            $error = 'Erreur lors de la récupération des catégories: ' . $categoriesData['message'];
+            $error = $this->formatErrorMessage('récupération des catégories', $categoriesData['message']);
             $categoriesData = [];
         }
         
@@ -55,7 +55,7 @@ class CategoryController extends AbstractController
             $result = $this->apiService->createCategory($category->toArray());
             
             if (isset($result['success']) && $result['success'] === false) {
-                $this->addFlash('error', 'Erreur lors de la création de la catégorie: ' . $result['message']);
+                $this->addFlash('error', $this->formatErrorMessage('création de la catégorie', $result['message']));
             } else {
                 $this->addFlash('success', 'La catégorie a été créée avec succès.');
                 return $this->redirectToRoute('category_index');
@@ -74,7 +74,7 @@ class CategoryController extends AbstractController
         $categoryData = $this->apiService->getCategory($id);
         
         if (isset($categoryData['success']) && $categoryData['success'] === false) {
-            $this->addFlash('error', 'Erreur lors de la récupération de la catégorie: ' . $categoryData['message']);
+            $this->addFlash('error', $this->formatErrorMessage('récupération de la catégorie', $categoryData['message']));
             return $this->redirectToRoute('category_index');
         }
         
@@ -102,7 +102,7 @@ class CategoryController extends AbstractController
         $categoryData = $this->apiService->getCategory($id);
         
         if (isset($categoryData['success']) && $categoryData['success'] === false) {
-            $this->addFlash('error', 'Erreur lors de la récupération de la catégorie: ' . $categoryData['message']);
+            $this->addFlash('error', $this->formatErrorMessage('récupération de la catégorie', $categoryData['message']));
             return $this->redirectToRoute('category_index');
         }
         
@@ -114,7 +114,7 @@ class CategoryController extends AbstractController
             $result = $this->apiService->updateCategory($id, $category->toArray());
             
             if (isset($result['success']) && $result['success'] === false) {
-                $this->addFlash('error', 'Erreur lors de la mise à jour de la catégorie: ' . $result['message']);
+                $this->addFlash('error', $this->formatErrorMessage('mise à jour de la catégorie', $result['message']));
             } else {
                 $this->addFlash('success', 'La catégorie a été mise à jour avec succès.');
                 return $this->redirectToRoute('category_index');
@@ -134,12 +134,40 @@ class CategoryController extends AbstractController
             $result = $this->apiService->deleteCategory($id);
             
             if (isset($result['success']) && $result['success'] === false) {
-                $this->addFlash('error', 'Erreur lors de la suppression de la catégorie: ' . $result['message']);
+                $this->addFlash('error', $this->formatErrorMessage('suppression de la catégorie', $result['message']));
             } else {
                 $this->addFlash('success', 'La catégorie a été supprimée avec succès.');
             }
         }
         
         return $this->redirectToRoute('category_index');
+    }
+    
+    /**
+     * Formate les messages d'erreur pour un affichage plus convivial
+     * 
+     * @param string $action L'action qui a échoué
+     * @param string $message Le message d'erreur original
+     * @return string Le message formatté
+     */
+    private function formatErrorMessage(string $action, string $message): string
+    {
+        // Cas spécifique des catégories existantes
+        if (strpos($message, 'already exists') !== false) {
+            // Extraction du nom de la catégorie entre guillemets simples
+            preg_match("/'([^']+)'/", $message, $matches);
+            $categoryName = $matches[1] ?? "cette catégorie";
+            
+            return "Une catégorie portant le nom '$categoryName' existe déjà dans le système.";
+        }
+        
+        // Normaliser certains messages spécifiques pour une meilleure lisibilité
+        $normalizedMessage = str_replace(
+            ['A category with the name', 'doesn\'t exist', 'Cannot delete'],
+            ['Une catégorie avec le nom', 'n\'existe pas', 'Impossible de supprimer'],
+            $message
+        );
+        
+        return "Erreur lors de la $action : $normalizedMessage";
     }
 }
