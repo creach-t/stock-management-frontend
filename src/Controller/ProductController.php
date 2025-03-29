@@ -30,18 +30,30 @@ class ProductController extends AbstractController
         $size = (int)$request->query->get('size', 10);
         $sort = $request->query->get('sort', 'ASC');
         
-        // Recherche par terme
+        // Récupération des paramètres de filtrage
         $searchTerm = $request->query->get('search');
-        if ($searchTerm) {
-            $productsData = $this->apiService->searchProducts($searchTerm, $page, $size, $sort);
-        } else {
-            $productsData = $this->apiService->getProducts();
-        }
-        
-        // Filtre par catégorie
         $categoryId = $request->query->get('category');
-        if ($categoryId) {
+        
+        // Par défaut, on récupère tous les produits
+        $productsData = null;
+        
+        // Si on a un terme de recherche (même vide) 
+        if ($searchTerm !== null) {
+            // Si le terme est vide mais qu'on a une catégorie, on utilise getProductsByCategory avec pagination
+            if (empty($searchTerm) && $categoryId) {
+                $productsData = $this->apiService->getProductsByCategory($categoryId, $page, $size, $sort);
+            } else {
+                // Sinon on utilise la recherche standard
+                $productsData = $this->apiService->searchProducts($searchTerm, $page, $size, $sort);
+            }
+        } 
+        // Si on a seulement une catégorie
+        elseif ($categoryId) {
             $productsData = $this->apiService->getProductsByCategory($categoryId, $page, $size, $sort);
+        } 
+        // Sinon on récupère tous les produits
+        else {
+            $productsData = $this->apiService->getProducts();
         }
         
         // Vérifier si une erreur s'est produite
@@ -76,6 +88,7 @@ class ProductController extends AbstractController
             'pageSize' => $size,
             'sort' => $sort,
             'error' => $error,
+            'isPaginationActive' => ($searchTerm !== null || $categoryId)
         ]);
     }
     
