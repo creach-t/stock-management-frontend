@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: .
+    ports:
+      - "8081:80"
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+      - /var/www/html/public/build
+    environment:
+      - APP_ENV=dev
+      - APP_SECRET=33c7f97c04cb59af61b2943ae9e46f71
+      - API_URL=http://host.docker.internal:8080/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
