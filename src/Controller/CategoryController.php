@@ -85,8 +85,13 @@ class CategoryController extends AbstractController
         $products = [];
         
         if (!(isset($productsData['success']) && $productsData['success'] === false)) {
-            foreach ($productsData as $productData) {
-                $products[] = $productData;
+            // Vérifier si les données sont au format paginé (contenant 'content')
+            if (isset($productsData['content']) && is_array($productsData['content'])) {
+                // Extraire les produits du contenu paginé
+                $products = $productsData['content'];
+            } else {
+                // Sinon, utiliser les données telles quelles (ancien format)
+                $products = $productsData;
             }
         }
         
