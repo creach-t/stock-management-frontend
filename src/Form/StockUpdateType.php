@@ -22,6 +22,10 @@ class StockUpdateType extends AbstractType
             ->add('operationType', ChoiceType::class, [
                 'label' => 'Opération',
                 'choices' => StockUpdate::getOperationTypes(),
+                'choice_attr' => function($choice, $key, $value) {
+                    // Ajouter des attributs data pour faciliter le débogage
+                    return ['data-key' => $key, 'data-value' => $value];
+                },
                 'attr' => [
                     'class' => 'form-control'
                 ],
@@ -57,6 +61,10 @@ class StockUpdateType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => StockUpdate::class,
+            // Assurer que les données sont transmises exactement comme elles sont
+            'csrf_protection' => true,
+            'csrf_field_name' => '_token',
+            'csrf_token_id' => 'stock_update',
         ]);
     }
 }
