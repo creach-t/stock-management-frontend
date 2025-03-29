@@ -144,11 +144,40 @@ class Product
             $product->setCategoryId((int) $data['categoryId']);
         }
         
+        // Gestion des différentes structures possibles pour la catégorie
         if (isset($data['category']) && isset($data['category']['name'])) {
+            // Format avec objet category complet
             $product->setCategoryName($data['category']['name']);
+        } elseif (isset($data['categoryName'])) {
+            // Format avec juste le nom de la catégorie
+            $product->setCategoryName($data['categoryName']);
+        } elseif (isset($data['categoryId']) && is_numeric($data['categoryId'])) {
+            // Si on a seulement l'ID de catégorie, on essaie de récupérer le nom correspondant
+            $categoryId = (int) $data['categoryId'];
+            $categoryName = self::getCategoryNameFromId($categoryId);
+            if ($categoryName) {
+                $product->setCategoryName($categoryName);
+            }
         }
         
         return $product;
+    }
+
+    /**
+     * Récupère le nom d'une catégorie à partir de son ID
+     * Méthode statique utilisée comme fallback
+     */
+    private static function getCategoryNameFromId(int $categoryId): ?string
+    {
+        // Map des catégories connues (basé sur les données de ProductController)
+        $categoriesMap = [
+            1 => 'Electronics',
+            2 => 'Clothing',
+            3 => 'Food & Beverages',
+            4 => 'Office Supplies',
+        ];
+        
+        return $categoriesMap[$categoryId] ?? null;
     }
 
     /**
