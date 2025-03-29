@@ -2,6 +2,55 @@
 
 {% block title %}Détails du produit - {{ product.name }}{% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Styles pour mobile */
+    @media (max-width: 767px) {
+        .product-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .action-buttons .btn {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-buttons .btn-danger {
+            grid-column: span 2;
+        }
+        
+        .inventory-card {
+            margin-bottom: 1.5rem;
+        }
+        
+        .product-info-card table {
+            width: 100%;
+        }
+        
+        .product-info-card th,
+        .product-info-card td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .product-info-card th {
+            width: 40%;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block body %}
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -11,7 +60,8 @@
         </ol>
     </nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    {# Desktop header #}
+    <div class="d-none d-md-flex justify-content-between align-items-center mb-4">
         <h1>{{ product.name }}</h1>
         <div class="btn-group" role="group">
             <a href="{{ path('product_edit', {'id': product.id}) }}" class="btn btn-warning">
@@ -26,8 +76,48 @@
         </div>
     </div>
 
+    {# Mobile header #}
+    <div class="d-md-none mb-3">
+        <h1 class="product-title">{{ product.name }}</h1>
+        <div class="action-buttons">
+            <a href="{{ path('product_edit', {'id': product.id}) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+            <a href="{{ path('product_stock', {'id': product.id}) }}" class="btn btn-primary">
+                <i class="bi bi-box"></i> Stock
+            </a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-trash"></i> Supprimer
+            </button>
+        </div>
+    </div>
+
     <div class="row">
-        <div class="col-md-8">
+        {# Mobile - On affiche d'abord l'inventaire puis les informations #}
+        <div class="d-md-none col-12 inventory-card">
+            <div class="card mb-4">
+                <div class="card-header {% if product.isLowStock() %}bg-warning text-white{% else %}bg-success text-white{% endif %}">
+                    <h5 class="card-title mb-0">Inventaire</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-1 {% if product.isLowStock() %}text-warning{% endif %}">{{ product.quantity }}</h1>
+                    <p class="mb-0">unités en stock</p>
+                    {% if product.isLowStock() %}
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="bi bi-exclamation-triangle"></i> Stock faible
+                        </div>
+                    {% endif %}
+                    <div class="mt-3">
+                        <a href="{{ path('product_stock', {'id': product.id}) }}" class="btn btn-primary">
+                            <i class="bi bi-box"></i> Ajuster le stock
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {# Informations du produit - pour tous les écrans #}
+        <div class="col-md-8 product-info-card">
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Informations du produit</h5>
@@ -36,7 +126,7 @@
                     <table class="table">
                         <tbody>
                             <tr>
-                                <th style="width: 30%">SKU</th>
+                                <th>SKU</th>
                                 <td>{{ product.sku }}</td>
                             </tr>
                             <tr>
@@ -56,7 +146,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        
+        {# Inventaire - visible seulement sur desktop #}
+        <div class="d-none d-md-block col-md-4">
             <div class="card mb-4">
                 <div class="card-header {% if product.isLowStock() %}bg-warning text-white{% else %}bg-success text-white{% endif %}">
                     <h5 class="card-title mb-0">Inventaire</h5>
