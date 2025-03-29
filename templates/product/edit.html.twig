@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le produit - {{ product.name }}{% endblock %}
+
+{% block body %}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Tableau de bord</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('product_index') }}">Produits</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('product_show', {'id': product.id}) }}">{{ product.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Modifier</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Modifier le produit</h1>
+        <div class="btn-group" role="group">
+            <a href="{{ path('product_show', {'id': product.id}) }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour au produit
+            </a>
+            <a href="{{ path('product_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-list"></i> Liste des produits
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Informations du produit</h5>
+        </div>
+        <div class="card-body">
+            {{ form_start(form) }}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.name) }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.sku) }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        {{ form_row(form.description) }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        {{ form_row(form.price) }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form_row(form.quantity) }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form_row(form.categoryId) }}
+                    </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-check-circle"></i> Enregistrer
+                    </button>
+                    <a href="{{ path('product_show', {'id': product.id}) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
