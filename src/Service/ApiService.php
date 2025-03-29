@@ -191,11 +191,25 @@ class ApiService
                 $options
             );
 
+            // Vérifier si la réponse a un contenu
+            $statusCode = $response->getStatusCode();
+            $contentLength = $response->getHeaders()['content-length'][0] ?? 0;
+            
+            // Pour une réponse 204 (No Content) ou une réponse vide mais réussie
+            if ($statusCode === 204 || (int)$contentLength === 0) {
+                error_log("Réponse vide avec code HTTP: " . $statusCode);
+                return [
+                    'success' => true,
+                    'message' => 'Opération réussie'
+                ];
+            }
+            
+            // Sinon, traiter la réponse JSON comme avant
             $responseData = $response->toArray();
             
             // Journaliser pour les opérations importantes
             if ($method !== 'GET') {
-                error_log("Réponse HTTP: " . $response->getStatusCode());
+                error_log("Réponse HTTP: " . $statusCode);
                 error_log("Réponse de $endpoint: " . json_encode($responseData));
             }
             
@@ -242,9 +256,12 @@ class ApiService
                 
                 error_log("Réponse d'erreur (code $statusCode): $content");
                 
-                $data = json_decode($content, true);
-                if (isset($data['message'])) {
-                    $details = $data['message'];
+                // S'assurer que le contenu n'est pas vide avant de tenter de le décoder
+                if (!empty($content)) {
+                    $data = json_decode($content, true);
+                    if (isset($data['message'])) {
+                        $details = $data['message'];
+                    }
                 }
             } catch (\Exception $e) {
                 // Si on ne peut pas récupérer les détails, on continue sans
