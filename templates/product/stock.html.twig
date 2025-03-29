@@ -72,7 +72,7 @@
             <h5 class="card-title mb-0">Ajuster le stock</h5>
         </div>
         <div class="card-body">
-            {{ form_start(form) }}
+            {{ form_start(form, {'attr': {'id': 'stock-update-form'}}) }}
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         {{ form_row(form.operationType) }}
@@ -92,4 +92,45 @@
             {{ form_end(form) }}
         </div>
     </div>
+
+    {# Afficher les données actuelles pour le débogage #}
+    {% if app.environment == 'dev' %}
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">Informations de débogage</h5>
+            </div>
+            <div class="card-body">
+                <h6>Valeurs du formulaire</h6>
+                <pre id="debug-values" class="bg-light p-3">
+                    Formulaire non soumis
+                </pre>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const form = document.getElementById('stock-update-form');
+                        const debugDiv = document.getElementById('debug-values');
+                        
+                        // Afficher les valeurs initiales
+                        updateDebugInfo();
+                        
+                        // Mettre à jour quand l'utilisateur change les valeurs
+                        form.querySelectorAll('select, input').forEach(input => {
+                            input.addEventListener('change', updateDebugInfo);
+                        });
+                        
+                        function updateDebugInfo() {
+                            const operationType = form.querySelector('[name$="[operationType]"]');
+                            const quantityChange = form.querySelector('[name$="[quantityChange]"]');
+                            const productId = form.querySelector('[name$="[productId]"]');
+                            
+                            debugDiv.textContent = `
+OperationType: ${operationType ? operationType.value : 'N/A'}
+QuantityChange: ${quantityChange ? quantityChange.value : 'N/A'}
+ProductId: ${productId ? productId.value : 'N/A'}
+                            `;
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}
