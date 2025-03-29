@@ -107,9 +107,9 @@ class StockUpdate
     public static function getOperationTypes(): array
     {
         return [
-            self::OPERATION_ADD => 'Ajouter',
-            self::OPERATION_REMOVE => 'Retirer',
-            self::OPERATION_SET => 'Définir',
+            self::OPERATION_ADD => 'ADD',
+            self::OPERATION_REMOVE => 'REMOVE',
+            self::OPERATION_SET => 'SET',
         ];
     }
 }
