@@ -174,7 +174,19 @@ class ApiService
      */
     public function getProductsByCategory(int $categoryId, int $page = 0, int $size = 20, string $sort = 'ASC')
     {
-        return $this->makeRequest('GET', '/products/category/' . $categoryId . '?page=' . $page . '&size=' . $size . '&sort=' . $sort);
+        $endpoint = '/products/category/' . $categoryId . 
+                   '?page=' . $page . 
+                   '&size=' . $size . 
+                   '&sort=' . $sort;
+        
+        $response = $this->makeRequest('GET', $endpoint);
+        
+        // Si la réponse est paginée (contient 'content'), retourner seulement le contenu
+        if (is_array($response) && isset($response['content'])) {
+            return $response['content'];
+        }
+        
+        return $response;
     }
 
     /**
