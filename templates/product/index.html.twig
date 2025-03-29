@@ -27,16 +27,30 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
+        }
+        
+        .mobile-card-header-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .mobile-card-header-icon.expanded {
+            transform: rotate(180deg);
         }
         
         .mobile-card-body {
             padding: 1.25rem;
+            display: none;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+        }
+        
+        .mobile-card-body.show {
+            display: block;
         }
         
         .mobile-card-footer {
             padding: 0.75rem 1.25rem;
             background-color: rgba(0,0,0,.03);
-            border-top: 1px solid rgba(0,0,0,.125);
         }
         
         .mobile-product-info {
@@ -53,6 +67,35 @@
         }
     }
 </style>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajouter un événement de clic aux en-têtes des cartes mobiles
+        document.querySelectorAll('.mobile-card-header').forEach(function(header) {
+            header.addEventListener('click', function() {
+                // Trouver le corps de la carte associé
+                const body = this.nextElementSibling;
+                
+                // Vérifier si le corps est déjà affiché
+                const isExpanded = body.classList.contains('show');
+                
+                // Basculer l'affichage du corps
+                body.classList.toggle('show');
+                
+                // Basculer l'icône d'expansion
+                const icon = this.querySelector('.mobile-card-header-icon');
+                if (isExpanded) {
+                    icon.classList.remove('expanded');
+                } else {
+                    icon.classList.add('expanded');
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}
 
 {% block body %}
@@ -147,15 +190,21 @@
                 </div>
             </div>
             
-            {# Affichage pour les écrans mobiles #}
+            {# Affichage pour les écrans mobiles - version accordion #}
             <div class="d-md-none">
                 {% for product in products %}
                     <div class="mobile-card">
                         <div class="mobile-card-header">
-                            <h5 class="mb-0">{{ product.name }}</h5>
-                            <span class="badge {% if product.isLowStock() %}bg-danger{% else %}bg-success{% endif %}">
-                                Stock: {{ product.quantity }}
-                            </span>
+                            <div>
+                                <h5 class="mb-0">{{ product.name }}</h5>
+                                <small>{{ product.price|number_format(2, ',', ' ') }} €</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge {% if product.isLowStock() %}bg-danger{% else %}bg-success{% endif %} me-2">
+                                    {{ product.quantity }}
+                                </span>
+                                <i class="bi bi-chevron-down mobile-card-header-icon"></i>
+                            </div>
                         </div>
                         <div class="mobile-card-body">
                             <div class="mobile-product-info">
@@ -168,7 +217,7 @@
                                 <strong>Catégorie:</strong> {{ product.categoryName }}
                             </div>
                             <div class="mobile-product-info">
-                                <strong>Prix:</strong> {{ product.price|number_format(2, ',', ' ') }} €
+                                <strong>Description:</strong> {{ product.description|default('Non spécifiée') }}
                             </div>
                         </div>
                         <div class="mobile-card-footer">
